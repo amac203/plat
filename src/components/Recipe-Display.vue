@@ -31,19 +31,21 @@
         <div v-if="!savedRecipe && !ownRecipe" class="nice-button" id="saveButton" v-on:click="saveThis()">
           save it
         </div>
+        <div v-if="savedRecipe && !ownRecipe" class="nice-button" id="unSaveButton" v-on:click="removeThis()">
+          un-save
+        </div>
       </div>
     </div>
-    <div class="recipe-header" style="align-items: flex-end;" v-if="editing">
+    <div class="recipe-header" style="align-items: flex-end;" v-if="editing" v-bind:class="{editHeader : editing}">
       <div class="name-box">
         <div class="nice-button" style="margin:0.3em" v-on:click="editToggle()">
           save
         </div>
         <input maxlength='25' @focus="$event.target.select()" v-model="displayTitle"
-        class="display-name small-input" v-on:keyup="saveUpdates()" v-on:keydown="keyDown()">
-
+        class="display-name small-input" v-on:keyup="saveUpdates()">
       </div>
       <input maxlength='75' @focus="$event.target.select()" v-model="displaySubtitle"
-      class="display-subtitle smaller-input" v-on:keyup="saveUpdates()" v-on:keydown="keyDown()">
+      class="display-subtitle smaller-input" v-on:keyup="saveUpdates()">
       <div class="edit-tags" v-if="editing">
         <div class="tag-container-edit">
           <div class="help-text">Selected tags:</div>
@@ -62,7 +64,6 @@
       </div>
     </div>
 
-
     <div v-if="!editing" class="ingredient-container">
       <div class="ingredient-item"
         v-for="ingredient in ingredients"
@@ -76,22 +77,24 @@
           {{ ingredient.qty }}
         </div>
       </div>
-    </div>
+    </d
+    iv>
+
     <div v-if="editing" class="ingredient-container">
       <div class="ingredient-item"
         v-for="ingredient in ingredients"
         v-bind:key="ingredient._id"
         v-bind:name="ingredient.name"
         v-bind:quantity="ingredient.qty">
-        <input maxlength='25' @focus="$event.target.select()" class="ingredient-name ingredient-input-big"
+        <input maxlength='30' @focus="$event.target.select()" class="ingredient-name ingredient-input-big"
         v-model="ingredient.name" v-on:keydown="keyDown()">
-        <input maxlength='10' @focus="$event.target.select()" class="ingredient-quantity ingredient-input"
+        <input maxlength='15' @focus="$event.target.select()" class="ingredient-quantity ingredient-input"
         v-model="ingredient.qty" v-on:keydown="keyDown()">
         <div class="small-button" v-on:click="deleteIngredient(ingredient._id)">x</div>
       </div>
-      <div class="ingredient-item" v-if="ingredients.length <= 9">
-        <input maxlength='25' @focus="$event.target.select()" class="ingredient-name ingredient-input-big" v-model="newIngredient.name">
-        <input maxlength='10' @focus="$event.target.select()" class="ingredient-quantity ingredient-input" v-model="newIngredient.qty">
+      <div class="ingredient-item" v-if="ingredients.length <= 11">
+        <input maxlength='30' @focus="$event.target.select()" class="ingredient-name ingredient-input-big" v-model="newIngredient.name">
+        <input maxlength='15' @focus="$event.target.select()" class="ingredient-quantity ingredient-input" v-model="newIngredient.qty">
         <div class="small-button" v-on:click="addNewIngredient()">add</div>
       </div>
     </div>
@@ -115,12 +118,14 @@
         :editing='0'
       >
       </step-tile>
-      <comment-container
+      <comment-container v-if="userName"
         v-on:addComment="addComment($event)"
-        :comments="comments">
+        :comments="comments"
+        :userName="userName">
       </comment-container>
     </div>
-    <div v-if="editing" class="step-container" v-bind:style="{backgroundImage: 'url(' + paper + ' )' }">
+
+    <div v-if="editing" class="step-container edit-step" v-bind:style="{backgroundImage: 'url(' + paper + ' )' }">
       <step-tile v-if="visibleStep"
         :name="visibleStep.name"
         v-on:update:name="visibleStep.name = $event"
@@ -129,16 +134,13 @@
         :editing='1'
         >
       </step-tile>
-      <div class="nice-button" v-if="steps.length < 6" style="margin-top:0.6em" v-on:click="newStep()">
+      <div class="nice-button" v-if="steps.length < 5" style="margin-top:0.6em" v-on:click="newStep()">
         new step
       </div>
     </div>
-
-    <div id="spicy" v-bind:style="{backgroundImage: 'url(' + spicy + ' )' }"></div>
+    <div id="spicy" v-bind:style="{backgroundImage: 'url(' + spicy + ' )' }" v-if="!editing"></div>
     <div class="img-container" v-bind:style="{backgroundImage: 'url(' + recipeBGImage + ' )' }" >
     </div>
-
-
   </div>
 </template>
 

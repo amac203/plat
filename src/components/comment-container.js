@@ -1,34 +1,49 @@
-
 export default {
   name: 'CommentContainer',
+
   props: {
-    comments: Array
+    comments: Array,
+    userName: String,
   },
-  data: function () {
+
+  data() {
     return {
-      newComment: "add new note",
-    }
+      newComment: 'add new note',
+    };
   },
+
   computed: {
     newText: {
-      get: function() {
-        return this.newComment
+      get() {
+        return this.newComment;
       },
-      set: function(newValue) {
-        this.$emit('update:newComment', newValue)
-        return newValue
-      }
+      set(newValue) {
+        this.$emit('update:newComment', newValue);
+        return newValue;
+      },
     },
   },
-  methods: {
-    addComment: function () {
-      const addedComment = {text: this.newText, author: "added"}
-      this.comments.push(addedComment)
-      this.$emit('addComment', this.newComment)
-      this.newComment = "add new note"
-  },
-},
-  created() {
 
-  }
-}
+  methods: {
+    addComment() {
+      const addedComment = { text: this.newText, author: 'added' };
+      this.comments.push(addedComment);
+      this.$emit('addComment', this.newComment);
+      this.newComment = 'add new note';
+    },
+    async deleteComment(id) {
+      const deleteIndex = this.comments.findIndex((element) => element._id === id);
+      this.comments.splice(deleteIndex, 1);
+      const url = 'https://plat-342902.ts.r.appspot.com/comments/' + id;
+      fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Content-type': 'application/json',
+        },
+      }).then();
+    },
+  },
+
+  created() {
+  },
+};

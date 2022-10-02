@@ -1,25 +1,19 @@
-
-
 export default {
   name: 'SelectedTagBox',
   props: {
-    selectedTags: Array
+    selectedTags: Array,
   },
-  data: function () {
-    return {
-
-    }
+  data() {
+    return {};
   },
   computed: {
-
   },
   methods: {
-    removeTag: function (tag) {
-      tag.inUse = false
-      this.$emit('removeTag', tag)
+    removeTag(tag) {
+      tag.inUse = false;
+      this.$emit('removeTag', tag);
+    },
   },
-},
   created() {
-
-  }
-}
+  },
+};

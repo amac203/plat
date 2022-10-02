@@ -1,233 +1,235 @@
-import StepTile from './Step-Tile.vue'
-import TagBox from './Tag-Box.vue'
-import SelectedTagBox from './Selected-Tag-Box.vue'
-import CommentContainer from './Comment-Container.vue'
+import StepTile from './Step-Tile.vue';
+import TagBox from './Tag-Box.vue';
+import SelectedTagBox from './Selected-Tag-Box.vue';
+import CommentContainer from './Comment-Container.vue';
 
-import kale from "../assets/kale.jpeg"
-import paper from "../assets/paper.jpeg"
-import chilli from "../assets/chilli.jpeg"
-import sourdough from "../assets/sourdough.jpeg"
-import pies from "../assets/pies.jpeg"
-import soup from "../assets/soup.jpeg"
-import plate from "../assets/plate.jpeg"
-import wheatBGElement from "../assets/wheatBGElement.svg"
-import spicy from "../assets/spicy.png"
-
+import kale from '../assets/kale.jpeg';
+import paper from '../assets/paper.jpeg';
+import chilli from '../assets/chilli.jpeg';
+import sourdough from '../assets/sourdough.jpeg';
+import pies from '../assets/pies.jpeg';
+import soup from '../assets/soup.jpeg';
+import plate from '../assets/plate.jpeg';
+import wheatBGElement from '../assets/wheatBGElement.svg';
+import spicy from '../assets/spicy.png';
 
 export default {
   name: 'RecipeDisplay',
+
   props: {
-      recipeId: String,
-      title: String,
-      subtitle: String,
-      steps: Array,
-      author: String,
-      ingredients: Array,
-      tags: Array,
-      linkCode: String,
-      anonymousUser: 0,
-      savedRecipe: Boolean,
-      ownRecipe: Boolean,
-      editing: Boolean,
-      recipeBG: String,
-      userName: String,
-    },
+    recipeId: String,
+    title: String,
+    subtitle: String,
+    steps: Array,
+    author: String,
+    ingredients: Array,
+    tags: Array,
+    linkCode: String,
+    anonymousUser: 0,
+    savedRecipe: Boolean,
+    ownRecipe: Boolean,
+    editing: Boolean,
+    recipeBG: String,
+    userName: String,
+  },
+
   components: {
     StepTile,
     TagBox,
     SelectedTagBox,
-    CommentContainer
+    CommentContainer,
   },
-  data: function() {
+
+  data() {
     return {
-      kale: kale,
-      paper: paper,
-      chilli: chilli,
-      sourdough: sourdough,
-      pies: pies,
-      wheatBGElement: wheatBGElement,
-      spicy: spicy,
-      soup: soup,
-      plate: plate,
+      kale,
+      paper,
+      chilli,
+      sourdough,
+      pies,
+      wheatBGElement,
+      spicy,
+      soup,
+      plate,
 
-      comments : [],
-
-      newIngredient: { name: "add new", qty: "quantity"},
-      newComment: { text: "add comment", author: this.userName},
+      comments: [],
+      newIngredient: { name: 'add new', qty: 'quantity' },
+      newComment: { text: 'add comment', author: this.userName },
 
       selectedStepIndex: 0,
       selectedId: Object,
-
       tagBox: 0,
-      saveMessage: "",
+      saveMessage: '',
       urlString: 'https://plat-342902.ts.r.appspot.com/',
-    }
+    };
   },
+
   computed: {
-    recipeBGImage: function() {
-      if (this.recipeBG == 'pies'){
-        return pies
-      } else if (this.recipeBG == 'soup'){
-          return soup
-      } else if (this.recipeBG == 'sourdough'){
-          return sourdough
-      } else if (this.recipeBG == 'chilli'){
-          return chilli
-      } else if (this.recipeBG == 'kale'){
-          return kale
-      } else {
-        return plate
+    recipeBGImage() {
+      if (this.recipeBG === 'pies') {
+        return pies;
+      } if (this.recipeBG === 'soup') {
+        return soup;
+      } if (this.recipeBG === 'sourdough') {
+        return sourdough;
+      } if (this.recipeBG === 'chilli') {
+        return chilli;
+      } if (this.recipeBG === 'kale') {
+        return kale;
       }
+      return plate;
     },
     displayTitle: {
-      get: function() {
-        return this.title
+      get() {
+        return this.title;
       },
-      set: function(newValue) {
-        this.$emit('update:title', newValue)
-        return newValue
-      }
+      set(newValue) {
+        this.$emit('update:title', newValue);
+        return newValue;
+      },
     },
     displaySubtitle: {
-      get: function() {
-        return this.subtitle
+      get() {
+        return this.subtitle;
       },
-      set: function(newValue) {
-        this.$emit('update:subtitle', newValue)
-        return newValue
-      }
+      set(newValue) {
+        this.$emit('update:subtitle', newValue);
+        return newValue;
+      },
     },
     editedTags: {
-      get: function() {
-        return this.tags
+      get() {
+        return this.tags;
       },
-      set: function(newValue) {
-        this.$emit('update:tags', newValue)
-        return newValue
-      }
+      set(newValue) {
+        this.$emit('update:tags', newValue);
+        return newValue;
+      },
     },
-    visibleStep: function () {
-      return this.steps[this.selectedStepIndex]
+    visibleStep() {
+      return this.steps[this.selectedStepIndex];
     },
-    initialID: function(){
-      return this.steps[0]._id
+    visibleStepID() {
+      return this.steps[this.selectedStepIndex]._id;
     },
-
+    initialID() {
+      return this.steps[0]._id;
+    },
   },
+
   watch: {
-    initialID(newID){
-      this.selectStep(newID)
-      this.getComments(newID)
+    initialID(newID) {
+      this.selectStep(newID);
     },
-    ingredients(){
-      if (this.ingredients.length == 0 && !this.editing) {
-        this.$emit('alertChange', 'noIngredients')
+    ingredients() {
+      if (this.ingredients.length === 0 && !this.editing) {
+        this.$emit('alertChange', 'noIngredients');
       }
     },
-
-
+    visibleStep() {
+      this.getComments(this.visibleStepID);
+    },
   },
+
   methods: {
-    editToggle: function () {
-      if (this.editing) {
-        this.$emit('displayChange', 'recipe')
-        this.$emit('alertChange', 'home')
-        this.saveIngredients()
-        this.saveSteps()
-        this.editing = !this.editing
+    editToggle() {
+      if (this.editing === true) {
+        this.$emit('displayChange', 'recipe');
+        this.$emit('alertChange', 'recipe');
+        this.saveIngredients();
+        this.saveSteps();
+        this.editing = false;
+      } else if (this.editing === false) {
+        this.tags.forEach((tag) => tag.inUse = true);
+        this.$emit('displayChange', 'edit');
+        this.$emit('alertChange', 'edit');
+      }
+    },
+    saveThis() {
+      this.$emit('saveThis', this.recipeId);
+    },
+    removeThis() {
+      this.$emit('removeThis', this.recipeId);
+    },
+    addTag(tag) {
+      if (this.tags.length < 3) {
+        this.tags.push(tag);
+      }
+      this.$emit('saveUpdates');
+    },
+    removeTag(tag) {
+      const removeTag = this.tags.findIndex((element) => element.text === tag.text);
+      this.tags.splice(removeTag, 1);
+      if (this.tags.length === 0) {
+        this.$emit('alertChange', 'noTags');
       } else {
-        this.tags.forEach(tag => tag.inUse = true)
-        this.$emit('displayChange', 'edit')
-        this.$emit('alertChange', 'edit')
-        this.editing = !this.editing
+        this.$emit('saveUpdates');
       }
     },
-    saveThis: function () {
-      this.$emit('saveThis', this.recipeId)
-      this.savedRecipe = 1
-      this.$emit('alertChange', 'saved')
+    keyDown() {
+      // TODO
     },
-    addTag: function (tag) {
-      if (this.tags.length < 3){
-        this.tags.push(tag)
-      }
-      this.$emit('saveUpdates')
+    alertChange(message) {
+      this.$emit('alertChange', message);
     },
-    removeTag: function (tag) {
-      const removeTag = this.tags.findIndex(element => element.text === tag.text)
-      this.tags.splice(removeTag, 1)
-      if (this.tags.length == 0) {
-        this.$emit('alertChange', 'noTags')
-      } else {
-        this.$emit('saveUpdates')
-      }
+    saveUpdates() {
+      this.$emit('saveUpdates');
     },
-    keyDown: function () {
-      this.alertChange("edit")
+    saveIngredients() {
+      this.ingredients.forEach((ingredient) => { this.saveIngredient(ingredient); });
     },
-    alertChange: function(message){
-      this.$emit('alertChange', message)
-    },
-    saveUpdates: function () {
-      this.$emit('saveUpdates')
-    },
-    saveIngredients:function (){
-      this.ingredients.forEach((ingredient) => {this.saveIngredient(ingredient)})
-    },
-    saveIngredient: function (ingredient) {
+    saveIngredient(ingredient) {
       if (ingredient._id) {
-        this.$emit('saveIngredient', ingredient)
+        this.$emit('saveIngredient', ingredient);
       }
     },
-    addNewIngredient: function () {
-      this.$emit('addNewIngredient', this.newIngredient)
-      this.newIngredient = { name: "add new", qty: "quantity"}
+    addNewIngredient() {
+      this.$emit('addNewIngredient', this.newIngredient);
+      this.newIngredient = { name: 'add new', qty: 'quantity' };
     },
-    deleteIngredient: function (id){
-      this.$emit('deleteIngredient', id)
+    deleteIngredient(id) {
+      this.$emit('deleteIngredient', id);
     },
-    newStep: function() {
-      this.$emit('newStepClicked')
+    newStep() {
+      this.$emit('newStepClicked');
     },
-    selectStep: function(id) {
-      this.getComments(id)
-      this.steps[this.selectedStepIndex].selected = false
-      const selectedIndex = this.steps.findIndex(element => element._id === id)
-      this.steps[selectedIndex].selected = true
-      this.selectedStepIndex = selectedIndex
+    selectStep(id) {
+      this.steps[this.selectedStepIndex].selected = false;
+      const selectedIndex = this.steps.findIndex((element) => element._id === id);
+      this.steps[selectedIndex].selected = true;
+      this.selectedStepIndex = selectedIndex;
     },
-    saveSteps: function (){
-      this.steps.forEach((step) => {this.saveStep(step)})
+    saveSteps() {
+      this.steps.forEach((step) => { this.saveStep(step); });
     },
-    saveStep: function(step) {
-      this.$emit('saveStep', step)
+    saveStep(step) {
+      this.$emit('saveStep', step);
     },
-    getComments: function(stepID){
-      var url = this.urlString + 'comments/' + stepID
-      var requestOptions = {
-     'content-type': 'application/json',
-      method: 'GET',
-      redirect: 'follow'
-    };
-      fetch(url, requestOptions
-      ).then(response => response.json()).then(data => this.comments = data);
+    getComments(stepID) {
+      const url = this.urlString + 'comments/' + stepID;
+      const requestOptions = {
+        'content-type': 'application/json',
+        method: 'GET',
+        redirect: 'follow',
+      };
+      fetch(url, requestOptions).then((response) => response.json())
+        .then((data) => this.comments = data);
     },
-    addComment: function(text){
-      this.newComment.text = text
-      var url = this.urlString + 'comments/' + this.steps[this.selectedStepIndex]._id
+    addComment(text) {
+      this.newComment.text = text;
+      const url = this.urlString + 'comments/' + this.steps[this.selectedStepIndex]._id;
       fetch(url, {
         method: 'POST',
         headers: {
-          'Content-type': 'application/json'
+          'Content-type': 'application/json',
         },
         body: JSON.stringify(this.newComment),
-        }).then(
-        );
+      }).then();
     },
-    copyLink: function(){
+    copyLink() {
       navigator.clipboard.writeText('plat.kitchen/' + this.linkCode);
-      this.alertChange('')
-    }
+      this.alertChange('');
+    },
   },
 
-}
+};

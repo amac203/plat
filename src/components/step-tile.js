@@ -1,38 +1,42 @@
-import wheatBGElement from "../assets/wheatBGElement.svg"
+import wheatBGElement from '../assets/wheatBGElement.svg';
 
 export default {
   name: 'StepTile',
-  data: function () {
+
+  data() {
     return {
-      wheatBGElement: wheatBGElement
-    }
+      wheatBGElement,
+    };
   },
+
   props: {
     name: String,
     text: String,
-    editing: Number
+    editing: Number,
   },
+
   computed: {
     displayName: {
-      get: function() {
-        return this.name
+      get() {
+        return this.name;
       },
-      set: function(newValue) {
-        this.$emit('update:name', newValue)
-        return newValue
-      }
+      set(newValue) {
+        this.$emit('update:name', newValue);
+        return newValue;
+      },
     },
     displayText: {
-      get: function() {
-        return this.text
+      get() {
+        return this.text;
       },
-      set: function(newValue) {
-        this.$emit('update:text', newValue)
-        return newValue
-      }
+      set(newValue) {
+        this.$emit('update:text', newValue);
+        return newValue;
+      },
     },
   },
+
   methods: {
   },
 
-}
+};

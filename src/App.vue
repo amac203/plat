@@ -1,15 +1,21 @@
-<template style="background-color: #636363">
+<template>
   <div id="app" v-bind:style="{backgroundImage: 'url(' + woody + ' )' }">
     <div class="headerBar">
-      <div class="nice-button" v-if="anonymousUser" v-on:click="anonymousSplash()">
-        sign up to keep using plat
-      </div>
       <img class="headerLogo" />
       <div class="recipe-options" v-if="searchDisplay">
-        <div class="nice-button" v-if="displayMode == 'recipe'" v-on:click="displayChange('dashboard')">back</div>
+        <div class="nice-button"
+          v-if="displayMode == 'recipe'"
+          v-on:click="displayChange('dashboard')">
+          back
+        </div>
         <input id="headerSearch" @focus="$event.target.select()" v-model="searchTerm" v-on:keyup="searchRecipes()">
       </div>
-      <div class="alertMessage">{{alertMessage}}</div>
+      <div class="alertMessage">
+        <div class="nice-button" id="signUp" v-if="anonymousUser" v-on:click="displayChange('splash')">
+          sign up
+        </div>
+        {{alertMessage}}
+      </div>
     </div>
     <div class="splash" v-if="displayMode == 'splash'">
       <img class="bgElement" :src="greenBGElement" />
@@ -31,33 +37,41 @@
           <img class="bgElement2" :src="wheatBGElement" />
           <div class="log-in-options">
             <div class="splash-tile small-sign-in">
-              <div class="help-text">Sign in:</div>
+              <div class="help-text">sign in:</div>
               <img class="google-button" v-on:click="googleSignIn()">
             </div>
             <div class="splash-tile sign-in">
               <div class="help-text">or sign in with email:</div>
               <div class="help-text-small">If you have not signed up before, entering your email and a password will create your log-in details. </div>
               <div style="display:flex; flex-wrap:wrap; margin-bottom:0.5em">
-                <input style="height: 2em" placeholder="email" v-model="userName" @focus="$event.target.select()">
+                <input style="height: 2em" type="text" placeholder="email" v-model="userName" @focus="$event.target.select()">
                 <input style="height: 2em" type="text" placeholder="password" v-model="password" @focus="$event.target.type ='password'; $event.target.value = ''">
               </div>
               <div class="error-text" v-if="error">
                 {{ error }}
               </div>
               <div style="display: flex;align-items: flex-end;justify-content: space-between;">
-                <div class="nice-button" v-on:click="signInUser()">
+                <div class="nice-button" v-on:click="signInUser()" v-if="signingIn == false">
                   go
+                </div>
+                <div class="help-text" v-if="signingIn == true">
+                  signing in...
                 </div>
                 <div class="small-button" v-on:click="sendPassword()">
                   reset password
                 </div>
               </div>
             </div>
+            <div class="splash-tile small-sign-in">
+              <div class="help-text">browse without signing in:</div>
+              <div class="nice-button" v-on:click="anonymousExplore()">
+                explore
+              </div>
+            </div>
           </div>
       </div>
       <img class="bgElement2" :src="wheatBGElement" />
     </div>
-
   </div>
 
     <dashboard-tab
@@ -66,6 +80,7 @@
       v-bind:recipes="recipes"
       v-bind:savedRecipes="savedRecipes"
       v-bind:allRecipes="allRecipes"
+      v-bind:searchedRecipes="searchedRecipes"
       v-bind:currentUser="currentUser"
       v-bind:selectedTab="selectedTab"
       v-bind:isNewRecipe="isNewRecipe"
@@ -73,7 +88,8 @@
       v-on:getAllRecipes="getAllRecipes()"
       v-on:searchRecipes="searchByTerm($event)"
       v-on:sortRecipes="getSortedRecipes($event)"
-      v-on:saveThis="saveThis($event)"
+      v-on:saveThis="saveThisToNew($event)"
+      v-on:removeThis="removeThis($event)"
       v-on:getSavedRecipes="getSavedRecipes()"
       v-on:displayChange="displayChange($event)"
       v-on:alertChange="alertChange($event)">
@@ -100,7 +116,8 @@
       v-on:alertChange="alertChange($event)"
       v-on:displayChange="displayChange($event)">
     </recipe-display>
-    <div v-if="currentUser.displayName" class="small-button" style="margin:0.3em 0.3em 0.3em 0.3em" v-on:click="signOut()">
+    <div v-if="currentUser.displayName" class="small-button" style="padding-bottom: 0.3em;
+      border-radius: 0.2em 0.2em 0 0;" v-on:click="signOut()">
       sign out
     </div>
   </div>
@@ -122,7 +139,6 @@ import { getAuth,
     updateProfile,
     sendPasswordResetEmail,
     signOut,
-
    } from "firebase/auth";
 
 import splashImage from "./assets/friends2.jpeg"
@@ -156,6 +172,7 @@ export default {
       recipes: [],
       savedRecipes: [],
       allRecipes: [],
+      searchedRecipes: [],
       splash: true,
       dash: false,
       urlString: 'https://plat-342902.ts.r.appspot.com/',
@@ -168,23 +185,24 @@ export default {
       displayTags: [],
       steps: [],
       ingredients: [],
-      selectedTab: "my",
+      selectedTab: String,
 
       splashImage: splashImage,
       fullLogo: fullLogo,
       spicy: spicy,
       greenBGElement: greenBGElement,
       wheatBGElement: wheatBGElement,
-      tagline: "Cultivate Creativity",
 
-      userName: "email",
-      password: "password",
+      userName: "",
+      password: "",
+      signingIn: false,
 
       currentUser: Object,
       anonymousUser: false,
       toBeSavedId: "",
       error: "",
-      isNewRecipe: false
+      isNewRecipe: false,
+      homeButton: false
     }
   },
   computed: {
@@ -193,7 +211,6 @@ export default {
     },
   },
   watch: {
-
   },
   components: {
     DashboardTab,
@@ -251,7 +268,7 @@ export default {
     alertChange: function(message) {
       switch(message){
       case 'home':
-        this.alertMessage = "Welcome to Plat."
+        this.alertMessage = "Welcome to Plat. Sign-in below."
       break
       case 'dash':
         this.alertMessage = "Hi " + this.currentUser.displayName + ". Choose up to 5 tags to find a recipe for you."
@@ -262,14 +279,17 @@ export default {
       case 'filter':
         this.alertMessage = 'Displaying filtered recipes. Click an active tag to remove it from the filter criteria (Up to 5 tags).'
       break
+      case 'filterCleared':
+        this.alertMessage = 'Filter cleared.'
+      break
       case 'recipe':
-        this.alertMessage = 'You can leave a suggestion on any step of a recipe. Get creative.'
+        this.alertMessage = 'You can leave a suggestion on any step of a recipe.'
       break
       case 'copied':
         this.alertMessage = "Copied the link to the clipboard. Share it with a friend."
       break
       case 'noTags':
-        this.alertMessage = "Add 3 tags to your recipe. This will help it be sorted."
+        this.alertMessage = "Add 3 tags to your recipe. This will help it to be sorted."
       break
       case 'noIngredients':
         this.alertMessage = "Click 'edit' just below to add some ingredients."
@@ -277,14 +297,23 @@ export default {
       case 'anon':
         this.alertMessage = "Click 'save it' to keep it to check any time, on any device."
       break
+      case 'anonDash':
+        this.alertMessage = " to create and share your own recipes, and save your favourites."
+      break
+      case 'anonRecipe':
+        this.alertMessage = " to add your comments and create your own recipes."
+      break
       case 'user':
         this.alertMessage = "Welcome to your recipe collection, " + this.currentUser.displayName + "."
       break
       case 'saved':
         this.alertMessage = "Saved it to your recipe collection."
       break
+      case 'removed':
+        this.alertMessage = "Recipe is no longer in your collection."
+      break
       case 'newSignUp':
-        this.alertMessage = "Sign in below to start your recipe collection."
+        this.alertMessage = "Sign in below to continue your recipe collection."
       break
       case 'signOut':
         this.alertMessage = "You have been signed out, come again soon please."
@@ -296,9 +325,17 @@ export default {
     displayChange: function(mode) {
       if(mode == "splash"){
         this.displayMode = "splash"
+        this.searchDisplay = false
+        this.anonymousUser = false
+        this.alertChange('home')
       }
       if(mode == "recipe"){
         this.splash = false
+        if (this.anonymousUser) {
+          this.alertChange('anonRecipe')
+        } else {
+          this.alertChange('recipe')
+        }
         this.displayMode = "recipe"
         this.searchTerm = "search other recipes",
         this.searchDisplay = true
@@ -318,21 +355,40 @@ export default {
         this.searchDisplay = false
       }
       if(mode == "dashboard"){
+        if(this.anonymousUser){
+          this.displayChange('anon')
+        } else {
+          this.splash = false
+          this.dash = true
+          this.alertChange('dash')
+          this.getRecipes()
+          this.getSavedRecipes()
+          if (this.toBeSavedId){
+            this.selectedTab = "saved"
+            this.toBeSavedid = ""
+          }
+          else {
+            this.selectedTab = "my"
+          }
+          this.displayMode = "dashboard"
+          this.searchDisplay = false
+        }
+      }
+      if(mode == "anon"){
         this.splash = false
         this.dash = true
-        this.alertChange('dash')
-        this.getRecipes()
-        if (this.toBeSavedId){
-          this.selectedTab = "saved"
-          this.toBeSavedid = ""
-        }
-        else {
-          this.selectedTab = "my"
-        }
+        this.alertChange("anonDash")
+        this.getAllRecipes()
+        this.selectedTab = 'all'
         this.displayMode = "dashboard"
         this.searchDisplay = false
+        this.homeButton = true
       }
       window.scrollTo(0,0)
+    },
+    anonymousExplore: function(){
+      this.anonymousUser = true
+      this.displayChange('anon')
     },
     getRecipes: function(){
       var url = this.urlString + 'user/' + this.currentUser.uid
@@ -363,10 +419,20 @@ export default {
         },
         body: JSON.stringify(
           {recipe: id}),
-        }).then(
-          this.alertChange("Change saved."),
-          this.getSavedRecipes()
-      );
+        }).then(response => response.json()).then(data => this.savedRecipes.push(data));
+      this.alertChange("saved")
+    },
+    async removeThis(id){
+      var url = this.urlString + 'remove/' + this.currentUser.uid
+      fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify(
+          {recipe: id}),
+        }).then(this.getSavedRecipes());
+      this.alertChange("removed")
     },
     getSavedRecipes: function(){
       var url = this.urlString + 'saved/' + this.currentUser.uid
@@ -382,7 +448,6 @@ export default {
       var url = this.urlString + 'sort/Kstew55'
       const tagList = []
       tags.forEach((tag) => {tagList.push(tag.text)})
-      console.log(tagList)
       fetch(url, {
         method: 'POST',
         headers: {
@@ -390,7 +455,7 @@ export default {
         },
         body: JSON.stringify(tagList),
         }
-      ).then(response => response.json()).then(data => this.recipes = data);
+      ).then(response => response.json()).then(data => this.allRecipes = data);
     },
     searchByTerm: function(term){
       this.searchTerm = term
@@ -398,7 +463,7 @@ export default {
     },
     searchRecipes: function(){
       this.displayMode = "dashboard"
-      this.alertChange('dash')
+      this.alertChange('dashGeneral')
       if (!this.searchTerm) {
         this.getRecipes()
         this.searchTerm = "search recipes"
@@ -411,7 +476,7 @@ export default {
           'Content-type': 'application/json'
         },
         }
-      ).then(response => response.json()).then(data => this.recipes = data);
+      ).then(response => response.json()).then(data => this.searchedRecipes = data);
       }
     },
     saveThisToNew: function(id){
@@ -422,7 +487,6 @@ export default {
       } else {
         this.saveThis(id)
       }
-
     },
     newUser: function(){
       createUserWithEmailAndPassword(auth, this.userName, this.password)
@@ -436,6 +500,7 @@ export default {
         if (this.toBeSavedId){
           this.saveThis(this.toBeSavedId)
         }
+        this.anonymousUser = false
         this.displayChange('dashboard')
       })
       .catch((error) => {
@@ -446,22 +511,25 @@ export default {
       });
     },
     signInUser: function(){
+      this.signingIn = true
       signInWithEmailAndPassword(auth, this.userName, this.password)
       .then((userCredential) => {
         this.currentUser = userCredential.user
         this.alertChange('user')
         this.displayChange('dashboard')
+        this.signingIn = false
       })
       .catch((error) => {
         const errorCode = error.code;
         if(errorCode == "auth/user-not-found"){
           this.newUser()
+          this.signingIn = false
         } else {
           this.error = error.message
+          this.signingIn = false
         }
       });
     },
-
     googleSignIn: function(){
       const auth = getAuth(firebaseApp);
       var provider = new GoogleAuthProvider();
@@ -490,8 +558,11 @@ export default {
         });
     },
     signOut: function(){
+      this.password = ""
       signOut(auth).then(() => {
-        this.currentUser.displayName = ''
+        this.currentUser = {}
+        this.recipes = []
+        this.savedRecipes= []
         this.alertChange('signOut')
         this.displayChange('splash')
       }).catch((error) => {
@@ -504,12 +575,11 @@ export default {
           this.error = "Password reset email sent"
         })
         .catch((error) => {
-
           this.error = error.message;
-
         });
     }
   },
+
   created(){
     this.displayChange('splash')
     auth.onAuthStateChanged(user => { if(user){
@@ -523,7 +593,6 @@ export default {
     }})
     this.recipePath()
   },
-
 }
 
 </script>
